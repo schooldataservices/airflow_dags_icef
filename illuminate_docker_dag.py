@@ -26,7 +26,7 @@ with DAG(
     dag_id='illuminate_docker_dag',
     default_args=args,
     description='A Docker-based DAG to handle Illuminate API calls',
-    schedule_interval='0 5 * * 1-5',  # Every weekday (Mon-Fri) at 5:00 AM
+    schedule_interval='0 5 * * *',  # Every day at 5:00 AM
     catchup=False,
     max_active_runs=1
 ) as dag:

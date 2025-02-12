@@ -70,10 +70,10 @@ default_args = {
 }
 
 with DAG(
-    'dibels_selenium_dag',
+    'dibels_processing',
     default_args=default_args,
-    description='A DAG to run Dibels Selenium script',
-    schedule_interval='30 3 * * 1',  # Every Monday at 3:30 AM
+    description='A DAG to run Dibels Selenium script, and file processing',
+    schedule_interval='30 3 * * 1-5',  # Every Monday at 3:30 AM
     catchup=False,
 ) as dag:
     
@@ -93,8 +93,8 @@ with DAG(
     )
 
     # Define a task to run the Docker container (DockerOperator)
-    run_dibels_processing = DockerOperator(
-        task_id='run_dibels_script_processing',  # Unique task ID
+    create_dibels_assessment_results = DockerOperator(
+        task_id='create_dibels_assessment_results',  # Unique task ID
         image='dibels-processing',  # The image to run
         command='python /app/dibels_view.py',  # Command to execute in the container
         mounts=[
@@ -115,5 +115,32 @@ with DAG(
         dag=dag  # Associate the task with the DAG
     )
 
+      # Define a task to run the Docker container (DockerOperator)
+    create_dibels_pm_view = DockerOperator(
+        task_id='create_dibels_pm_view',  # Unique task ID
+        image='dibels-pm-processing',  # The image to run
+        command='python /app/create_dibels_view.py',  # Command to execute in the container
+        mounts=[
+            # Bind mount for CSV input files, & output
+            {
+                'source': '/home/g2015samtaylor/dibels',  # Path on the host
+                'target': '/app/dibels',  # Path inside the container
+                'type': 'bind',  # Type of volume (bind mount)
+            },
+            {
+                'source': '/home/g2015samtaylor/airflow/git_directory/Dibels/dibels_view',
+                'target': '/app/dibels_view',
+                'type': 'bind',
+            },
+            {
+                'source': '/home/g2015samtaylor/views',
+                'target': '/app/views',
+                'type': 'bind',
+            }
+        ],
+        trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails
+        dag=dag,  # Associate the task with the DAG
+    )
+
     # Set up the task dependencies (run Selenium first, then run Docker)
-    run_selenium_downloads >> run_dibels_processing
+    run_selenium_downloads >> create_dibels_assessment_results >> create_dibels_pm_view

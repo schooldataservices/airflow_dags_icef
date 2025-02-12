@@ -1,9 +1,5 @@
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
-import logging
-import pandas as pd
-import os
-import sys
 from datetime import datetime, timedelta
 
 
@@ -23,31 +19,29 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'star_processing_dag',
+    'state_testing_dag',
     default_args=default_args,
-    description='A DAG for processing STAR assessment files',
-    schedule_interval='25 3 * * 1-5',  
+    description='A DAG for processing state testing files',
+    schedule_interval='25 3 * * 1',  
     catchup=False,  # Do not backfill
 ) as dag:
     
-    # Define a task to run the Docker container (DockerOperator)
-    run_star_processing = DockerOperator(
-        task_id='run_star_script_processing',  # Unique task ID
-        image='star-processing',  # The image to run
-        command='python /app/main.py',  # Command to execute in the container
+       # Define a task to run the Docker container (DockerOperator)
+    run_state_testing_processing = DockerOperator(
+        task_id='run_state_testing_processing',  # Unique task ID
+        image='sbac-processing',  # The Docker image to run
+        command='python /app/main.py',  # Command to execute inside the container
         mounts=[
-            # Bind mount for CSV input files
             {
-                'source': '/home/g2015samtaylor/star',
-                'target': '/home/g2015samtaylor/star',
+                'source': '/home/g2015samtaylor/state_testing',
+                'target': '/app/state_testing',
                 'type': 'bind',
             },
-            # Bind mount for output directory
             {
                 'source': '/home/g2015samtaylor/views',
-                'target': '/home/g2015samtaylor/views',
+                'target': '/app/views',
                 'type': 'bind',
-            },
+            }
         ],
         dag=dag  # Associate the task with the DAG
     )

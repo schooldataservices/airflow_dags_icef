@@ -43,6 +43,11 @@ with DAG(
                 "Target": "/home/g2015samtaylor/views",  # Container path for output
                 "Type": "bind",
             },
+             {
+                "Source": "/home/icef/powerschool",  # Host directory for output CSV
+                "Target": "/home/icef/powerschool",  # Container path for output
+                "Type": "bind",
+            },
         ],
         command=["python", "iready_processing.py"],  # Command to run the script
         dag=dag,
@@ -51,7 +56,7 @@ with DAG(
        # Task 2: Run pivot-iready container, reference local file benchmark.csv to ultimately send to views as iready_orp.csv
     pivot_iready_task = DockerOperator(
         task_id='pivot_iready_data',
-        image='pivot-iready',  # The Docker image name for the second container
+        image='pivot-diagnostics',  # The Docker image name for the second container
         api_version='auto',
         auto_remove=True,
         mounts=[
@@ -70,13 +75,19 @@ with DAG(
                 "Target": "/app/benchmark.csv",  # Referencing container file
                 "Type": "bind",
             },
+            {
+                "Source": "/home/g2015samtaylor/star",  # Referencing local directory for multiple files
+                "Target": "/app/star",  # Referencing container file
+                "Type": "bind",
+            },
 
 
         ],
         command=[
             "--input_iready", "/app/iready_assessment_results.csv",
             "--input_dibels", "/app/benchmark.csv",
-            "--output", "/app/output_dir/iready_orp.csv",
+            "--input_star", "/app/star",
+            "--output", "/app/output_dir/diagnostic_results_tabular.csv",
         ],
     )
 
