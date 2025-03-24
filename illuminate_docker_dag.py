@@ -9,24 +9,22 @@ from airflow.exceptions import AirflowException
 timezone = pendulum.timezone('America/Chicago')
 
 # Default arguments
-args = {
+default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 10, 28),
-    'email_on_failure': True,
-    'email_on_retry': True,
+    'email_on_failure': False,
+    'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(hours=1),
-    'email': ['2015samtaylor@gmail.com']
 }
 
 # Define the DAG
 with DAG(
     dag_id='illuminate_docker_dag',
-    default_args=args,
+    default_args=default_args,
     description='A Docker-based DAG to handle Illuminate API calls',
     schedule_interval='0 5 * * *',  # Every day at 5:00 AM
+    start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1
 ) as dag:
@@ -40,27 +38,33 @@ with DAG(
         network_mode="host",  # Use host networking if required
         command='spark-submit /app/illuminate_pipeline.py',
         mounts=[
-            {   #Necessary for bringing in for calcs
-                "Source": "/home/icef/powerschool/Student_Rosters.txt",  # Host path
-                "Target": "/home/icef/powerschool/Student_Rosters.txt",  # Container path
-                "Type": "bind"
-            },
-
             {
-                "Source": "/home/g2015samtaylor/illuminate",  # Host directory for save_path. Needed to send to dir
-                "Target": "/home/g2015samtaylor/illuminate",  # Container path for save_path
+                "Source": "/home/g2015samtaylor/illuminate",  # Host directory for save_path
+                "Target": "/app/illuminate",  # Container path for save_path
                 "Type": "bind",
             },
-
             {
-                "Source": "/home/g2015samtaylor/views",  # Host directory for save_path
-                "Target": "/home/g2015samtaylor/views",  # Container path for save_path
+                "Source": "/home/g2015samtaylor/views",  # Host directory for view_path
+                "Target": "/app/views",  # Container path for view_path
+                "Type": "bind",
+            },
+            {
+                "Source": "/home/g2015samtaylor/airflow/git_directory/Illuminate/modules/illuminate_checkpoint_manual_changes.csv",  # Host file for manual_changes_file_path
+                "Target": "/app/illuminate_checkpoint_manual_changes.csv",  # Container path for manual_changes_file_path
+                "Type": "bind",
+            },
+            {
+                "Source": "/home/icef/powerschool/Student_Rosters.txt",  # Host file for Student_Rosters.txt
+                "Target": "/home/icef/powerschool/Student_Rosters.txt",  # Container path for Student_Rosters.txt
                 "Type": "bind",
             },
         ],
         environment={
             'PYSPARK_SUBMIT_ARGS': '--conf spark.pyspark.gateway.timeout=300',
+            'SAVE_PATH': '/app/illuminate',
+            'VIEW_PATH': '/app/views',
+            'MANUAL_CHANGES_FILE_PATH': '/app/illuminate_checkpoint_manual_changes.csv',
+            'YEARS_DATA': '24-25',
+            'START_DATE': '2024-07-01'
         }
     )
-
-    

@@ -24,7 +24,7 @@ dag = DAG(
     'bigquery_upload_dag',
     default_args=args,
     description='A DAG to upload files from SFTP to BigQuery',
-    schedule_interval='30 5 * * *',  # Every day at 6:50 AM
+    schedule_interval='30 5 * * *',  # Every day at 5:30 AM
     catchup=False,
     max_active_runs=1,
 )
@@ -33,7 +33,7 @@ dag = DAG(
 def create_upload_task(task_id, sftp_folder, local_dir):
     return DockerOperator(
         task_id=task_id,
-        image='upload-to-bigquery:dtype-fix',
+        image='upload-to-bigquery:latest',  #previous was upload-to-bigquery:dtype-fix
         api_version='auto',
         auto_remove=True,
         tty=True,
@@ -103,6 +103,18 @@ upload_star = create_upload_task(
     local_dir='/home/g2015samtaylor/star',
 )
 
+upload_state_testing = create_upload_task(
+    task_id='upload_to_bigquery_state_testing',
+    sftp_folder='state_testing',
+    local_dir='/home/g2015samtaylor/state_testing',
+)
+
+upload_state_testing = create_upload_task(
+    task_id='upload_to_bigquery_ixl',
+    sftp_folder='ixl',
+    local_dir='/home/g2015samtaylor/ixl',
+)
+
 # Run tasks in parallel
 upload_illuminate 
 upload_powerschool
@@ -110,3 +122,4 @@ upload_iready
 upload_python_views
 upload_dibels
 upload_star
+upload_state_testing

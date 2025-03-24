@@ -19,47 +19,32 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'state_testing_dag',
+    'ps_views_dag',
     default_args=default_args,
-    description='A DAG for processing state testing files',
-    schedule_interval='25 4 * * 1',  
+    description='A DAG for processing ps views',
+    schedule_interval='20 3 * * 1-5',  
     catchup=False,  # Do not backfill
 ) as dag:
     
        # Define a task to run the Docker container (DockerOperator)
-    run_state_testing_processing = DockerOperator(
-        task_id='run_state_testing_processing',  # Unique task ID
-        image='sbac-processing',  # The Docker image to run
-        command='python /app/main.py',  # Command to execute inside the container
-        mounts=[
-            {
-                'source': '/home/g2015samtaylor/state_testing',
-                'target': '/app/state_testing',
-                'type': 'bind',
-            },
-            {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/app/views',
-                'type': 'bind',
-            }
-        ],
-        dag=dag  # Associate the task with the DAG
-    )
-
-       # Define a task to run the Docker container (DockerOperator)
-    run_sbac_interim_processing = DockerOperator(
-        task_id='run_sbac_interim_processing',  # Unique task ID
-        image='sbac-interim-processing',  # The Docker image to run
+    create_student_to_teacher = DockerOperator(
+        task_id='student-to-teacher',  # Unique task ID
+        image='gcr.io/icef-437920/student-to-teacher:latest',  # The Docker image to run
         command='python /app/main.py',  # Command to execute inside the container
         mounts=[
             {
                 'source': '/home/g2015samtaylor/icef-437920.json',
-                'target': '/app/icef-437920.json',
+                'target': '/app/credentials.json',
                 'type': 'bind',
             },
             {
                 'source': '/home/g2015samtaylor/views',
                 'target': '/app/views',
+                'type': 'bind',
+            },
+            {
+                'source': '/home/icef/powerschool',
+                'target': '/app/ps',
                 'type': 'bind',
             }
         ],
@@ -67,5 +52,3 @@ with DAG(
 
     )
 
-run_state_testing_processing
-run_sbac_interim_processing
