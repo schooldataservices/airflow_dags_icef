@@ -23,9 +23,8 @@ args = {
 
 
 
-# Using the MySQL connection in Airflow to create an SQLAlchemy engine
-def send_data_pipeline_metadata(**kwargs):
-    # This will fetch the Airflow connection (with SQLAlchemy support)
+# Fetch data from MySQL
+def fetch_data_from_mysql():
     mysql_hook = MySqlHook(mysql_conn_id='mysql_default')
     connection = mysql_hook.get_conn()  # Get the MySQL connection
     engine = create_engine(mysql_hook.get_uri())  # Create an SQLAlchemy engine
@@ -39,21 +38,17 @@ def send_data_pipeline_metadata(**kwargs):
     # Ensure that the connection is closed to avoid reuse in the next task
     connection.close()  # Close the connection explicitly
 
-    kwargs['ti'].xcom_push(key='pipeline_data', value=df.to_json())
-
     return df
 
 
+# Write DataFrame to BigQuery
+def write_to_bigquery(project_id, dataset_id, table_id):
+    # Fetch the DataFrame directly
+    df = fetch_data_from_mysql()
 
-# Write DataFrame from XCom to BigQuery
-def write_to_bigquery(project_id, dataset_id, table_id, **kwargs):
-    ti = kwargs['ti']
-    json_data = ti.xcom_pull(task_ids='data_pipeline_metadata', key='pipeline_data')
+    if df.empty:
+        raise ValueError("No data fetched from MySQL!")
 
-    if json_data is None:
-        raise ValueError("No data received from XCom!")
-
-    df = pd.read_json(json_data)  # Convert back to DataFrame
     logging.info(df.iloc[0])
 
     try:
@@ -69,9 +64,8 @@ def write_to_bigquery(project_id, dataset_id, table_id, **kwargs):
         
         job.result()  # Wait for the job to complete
         logging.info(f"Data written to BigQuery table: {table_ref}")
-
     except Exception as e:
-        logging.error(f"Error writing to BigQuery: {e}")
+        logging.error(f"Failed to write data to BigQuery: {e}")
         raise
 
 
@@ -83,15 +77,6 @@ dag = DAG(
     schedule_interval='20 5 * * 1-5',
     start_date=datetime(2024, 10, 28),  # Match the start_date here
     catchup=False,  # No backfilling
-)
-
-
-# Extract Data from MySQL
-get_metadata = PythonOperator(
-    task_id='data_pipeline_metadata',
-    python_callable=send_data_pipeline_metadata,
-    provide_context=True,  # Required for XCom
-    dag=dag,
 )
 
 # Load Data into BigQuery
@@ -109,4 +94,4 @@ write_to_bq = PythonOperator(
 
 
 # Define task dependencies
-get_metadata >> write_to_bq  # Ensures MySQL fetch runs before BQ write
+write_to_bq  
