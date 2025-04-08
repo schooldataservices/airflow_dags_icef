@@ -9,7 +9,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from airflow.utils.log.logging_mixin import LoggingMixin
 from datetime import datetime, timedelta
 
-working_dir = '/home/g2015samtaylor/airflow/git_directory/IXL'
+working_dir = '/home/g2015samtaylor/git_directory/IXL'
 sys.path.append(working_dir)
 # Import your custom modules
 from modules.login import *
@@ -42,9 +42,8 @@ with DAG(
     catchup=False,
 ) as dag:
     
-    # Define parameters for download directory and destination directory
-    download_directory = '/home/g2015samtaylor/airflow/git_directory/IXL/downloads'
-    destination_dir = '/home/g2015samtaylor/ixl/'
+    # Define parameters for download directory 
+    download_directory = '/home/g2015samtaylor/git_directory/IXL/downloads'
     
     def setup_chrome_driver(download_directory):
         chrome_options = webdriver.ChromeOptions()
@@ -63,54 +62,55 @@ with DAG(
         return driver
     
     # Define a task to run the Selenium script (PythonOperator)
-    def run_ixl_script(download_directory, destination_dir, **kwargs):
+    def run_ixl_script(download_directory, **kwargs):
         logger = LoggingMixin().log
         logger.info('Starting run_ixl_script task')
         
         driver = setup_chrome_driver(download_directory)
         clear_directory(download_directory)
         
-        def process(driver, default_wait=30):
-            login(driver, default_wait)
-        
-            teachers = {
-                'Math-Teacher-2-VPHS Placeholder': 'Math',
-                'Math-Teacher-3-VPHS Placeholder': 'Math',
-                'Science-Teach-1-VPHS Placeholder': 'Math',
-                'Amir Alhambra': 'Math',
-                'Dameon Turney': 'Math',
-                "Te'a Jones": 'Math',
-                'Zion McCutcheon': 'ELA',
-                'Tiffany Estrada': 'ELA',
-                'Cal Dobbs': 'ELA',
-                'Kennedy Jameison': 'ELA',
-                'Devin Price': 'ELA',
-                'William Fowler': 'ELA'
-            }
-        
-            for teacher, subject in teachers.items():
-                make_selections(driver, subject, teacher, default_wait=30, download_dir=download_directory)
-            
-            check_file_count(download_directory, 12) #Error can be raised here if less than 12
-            driver.quit()
-            logger.info('Selenium Process has concluded')
-        
-            normalize_files_in_directory(download_directory)
-        
+        def process(default_wait=30):
+
+            try:
+                login(driver, default_wait)
+
+                teachers = {
+                    'Math-Teacher-2-VPHS Placeholder': 'Math',
+                    'Math-Teacher-3-VPHS Placeholder': 'Math',
+                    'Science-Teach-1-VPHS Placeholder': 'Math',
+                    'Amir Alhambra': 'Math',
+                    'Dameon Turney': 'Math',
+                    "Te'a Jones": 'Math',
+                    'Zion McCutcheon': 'ELA', #Subject is not showing up for him.
+                    'Tiffany Estrada': 'ELA',
+                    'Cal Dobbs': 'ELA',
+                    'Kennedy Jameison': 'ELA',
+                    'Devin Price': 'ELA',
+                    'William Fowler': 'ELA'
+                }
+
+                for teacher, subject in teachers.items():
+                    make_selections(driver, subject, teacher, default_wait=30, download_dir=download_directory)
+                
+                check_file_count(download_directory, 12)
+            finally:
+                driver.quit()
+                logging.info('Selenium Process has concluded')
+
+            # file_checks(download_directory)
+            normalize_files_in_directory(download_directory) 
+
             parent_dir = os.path.dirname(download_directory)
             normalized_dir = os.path.join(parent_dir, "normalized_files")
             stacked_df = stack_files_in_directory(normalized_dir)
 
-            destination = os.path.join(destination_dir ,'ixl.csv')
-            try:
-                stacked_df.to_csv(destination, index=False)
-                print(f'Stacked frame sent to {destination}')
-            except Exception as e:
-                print(f'Unable to send stacked frame to to {destination} due to {e}')
-            
-            return stacked_df
+            ixl_scores_math = stacked_df.loc[stacked_df['subject'].isin(['Algebra 1', 'Algebra 2', 'Geometry'])].reset_index(drop=True)
+
+            send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=stacked_df, frame_name='ixl_scores.csv')
+
+            return(stacked_df)
         
-        df = process(driver)
+        df = process()
         return df
     
     run_selenium_downloads = PythonOperator(
@@ -118,7 +118,6 @@ with DAG(
         python_callable=run_ixl_script,
         op_kwargs={
             'download_directory': download_directory,
-            'destination_dir': destination_dir
         },
         dag=dag,
     )

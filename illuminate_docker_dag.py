@@ -32,39 +32,24 @@ with DAG(
     # Task to run the Dockerized pipeline
     run_docker_pipeline = DockerOperator(
         task_id='run_docker_pipeline',
-        image='illuminate-pipeline:pyspark',  # Pulling local image. #This would pull from the cloud 'gcr.io/icef-437920/illuminate-pipeline:latest'
+        image='gcr.io/icef-437920/illuminate-pipeline:pyspark-v1',  # Pulling from GCR
         api_version='auto',
+        tty=True,
         auto_remove=True,  # Automatically remove the container after completion
         network_mode="host",  # Use host networking if required
         command='spark-submit /app/illuminate_pipeline.py',
         mounts=[
             {
-                "Source": "/home/g2015samtaylor/illuminate",  # Host directory for save_path
-                "Target": "/app/illuminate",  # Container path for save_path
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/g2015samtaylor/views",  # Host directory for view_path
-                "Target": "/app/views",  # Container path for view_path
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/g2015samtaylor/airflow/git_directory/Illuminate/modules/illuminate_checkpoint_manual_changes.csv",  # Host file for manual_changes_file_path
-                "Target": "/app/illuminate_checkpoint_manual_changes.csv",  # Container path for manual_changes_file_path
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/icef/powerschool/Student_Rosters.txt",  # Host file for Student_Rosters.txt
-                "Target": "/home/icef/powerschool/Student_Rosters.txt",  # Container path for Student_Rosters.txt
+                "Source": "/home/g2015samtaylor/icef-437920.json",  # Host path for credentials
+                "Target": "/app/icef-437920.json",  # Container path for credentials
                 "Type": "bind",
             },
         ],
         environment={
             'PYSPARK_SUBMIT_ARGS': '--conf spark.pyspark.gateway.timeout=300',
-            'SAVE_PATH': '/app/illuminate',
-            'VIEW_PATH': '/app/views',
-            'MANUAL_CHANGES_FILE_PATH': '/app/illuminate_checkpoint_manual_changes.csv',
             'YEARS_DATA': '24-25',
-            'START_DATE': '2024-07-01'
-        }
+            'START_DATE': '2024-07-01',
+            'GOOGLE_APPLICATION_CREDENTIALS': '/app/icef-437920.json'  # Add the environment variable
+        },
+        force_pull=True  # Ensures the latest image is pulled
     )

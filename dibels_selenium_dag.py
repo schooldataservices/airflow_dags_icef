@@ -11,7 +11,7 @@ from airflow.utils.dates import days_ago
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule  # Import TriggerRule
 
-working_dir = '/home/g2015samtaylor/airflow/git_directory/Dibels'
+working_dir = '/home/g2015samtaylor/git_directory/Dibels'
 sys.path.append(working_dir)
 from modules.login import *
 from modules.utility import *
@@ -78,7 +78,7 @@ with DAG(
 ) as dag:
     
     # Define parameters for download directory and destination directory
-    download_directory = '/home/g2015samtaylor/airflow/git_directory/Dibels/downloads'
+    download_directory = '/home/g2015samtaylor/git_directory/Dibels/downloads'
     destination_dir = '/home/g2015samtaylor/dibels'
     
     # Define a task to run the Dibels script (PythonOperator)
@@ -128,7 +128,7 @@ with DAG(
                 'type': 'bind',  # Type of volume (bind mount)
             },
             {
-                'source': '/home/g2015samtaylor/airflow/git_directory/Dibels/dibels_view',
+                'source': '/home/g2015samtaylor/git_directory/Dibels/dibels_view',
                 'target': '/app/dibels_view',
                 'type': 'bind',
             },

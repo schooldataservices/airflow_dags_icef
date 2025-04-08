@@ -9,7 +9,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from airflow.utils.log.logging_mixin import LoggingMixin
 from datetime import datetime, timedelta
 
-working_dir = '/home/g2015samtaylor/airflow/git_directory/state_testing/elpac_or_cers'
+working_dir = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers'
 sys.path.append(working_dir)
 # Import your custom modules
 from modules.login import *
@@ -43,8 +43,8 @@ with DAG(
 ) as dag:
     
     # Define parameters for download directory and destination directory
-    download_directory = '/home/g2015samtaylor/airflow/git_directory/state_testing/elpac_or_cers/downloads/'
-    destination_dir = '/home/g2015samtaylor/ixl/'
+    download_directory = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers/downloads/'
+    destination_dir = '/home/g2015samtaylor/state_testing/'
     
     def setup_chrome_driver(download_directory):
         chrome_options = webdriver.ChromeOptions()
@@ -88,7 +88,7 @@ with DAG(
                     
             logger.info('Selenium Process has concluded')
 
-            destination = os.path.join(destination_dir ,'ixl.csv')
+            destination = os.path.join(destination_dir ,'state_testing_continuous.csv')
             try:
                 stacked.to_csv(destination, index=False)
                 print(f'Stacked frame sent to {destination}')
@@ -110,3 +110,10 @@ with DAG(
 
     # Set task dependencies
     run_selenium_downloads
+
+
+# <a angulartics2on="click" angularticsaction="AddAssessment" angularticscategory="AssessmentResults" href="javascript:void(0)" 
+# class="tag tag-xs maroon ng-star-inserted">ELA Summative Grade 11</a>
+
+#Definitely need to add some extensive checks when running this to see what got donwload for what school
+#Maek the log look better on the errors. 

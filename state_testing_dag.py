@@ -26,45 +26,48 @@ with DAG(
     catchup=False,  # Do not backfill
 ) as dag:
     
-       # Define a task to run the Docker container (DockerOperator)
+    # Task for state testing processing
     run_state_testing_processing = DockerOperator(
         task_id='run_state_testing_processing',  # Unique task ID
-        image='sbac-processing',  # The Docker image to run
-        command='python /app/main.py',  # Command to execute inside the container
+        image='gcr.io/icef-437920/sbac-processing:latest',  # The Docker image to run
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/app/credentials.json',  # Path inside the container
+        },
         mounts=[
             {
-                'source': '/home/g2015samtaylor/state_testing',
-                'target': '/app/state_testing',
-                'type': 'bind',
+                'Source': '/home/g2015samtaylor/icef-437920.json',  # Path on the host machine
+                'Target': '/app/credentials.json',  # Path inside the container
+                'Type': 'bind',
             },
-            {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/app/views',
-                'type': 'bind',
-            }
         ],
+        force_pull=True,  # Ensure the latest image is pulled
+        auto_remove=True,  # Automatically remove the container after completion
+        api_version='auto',
+        tty=True,
+        network_mode="host",  # Use host networking if required
         dag=dag  # Associate the task with the DAG
     )
 
-       # Define a task to run the Docker container (DockerOperator)
+    # Task for SBAC interim processing
     run_sbac_interim_processing = DockerOperator(
         task_id='run_sbac_interim_processing',  # Unique task ID
-        image='sbac-interim-processing',  # The Docker image to run
-        command='python /app/main.py',  # Command to execute inside the container
+        image='gcr.io/icef-437920/sbac-processing-interim:latest',  # The Docker image to run
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/app/credentials.json',  # Path inside the container
+        },
         mounts=[
             {
-                'source': '/home/g2015samtaylor/icef-437920.json',
-                'target': '/app/icef-437920.json',
-                'type': 'bind',
+                'Source': '/home/g2015samtaylor/icef-437920.json',  # Path on the host machine
+                'Target': '/app/credentials.json',  # Path inside the container
+                'Type': 'bind',
             },
-            {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/app/views',
-                'type': 'bind',
-            }
         ],
+        force_pull=True,  # Ensure the latest image is pulled
+        auto_remove=True,  # Automatically remove the container after completion
+        api_version='auto',
+        tty=True,
+        network_mode="host",  # Use host networking if required
         dag=dag  # Associate the task with the DAG
-
     )
 
 run_state_testing_processing

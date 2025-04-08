@@ -33,7 +33,7 @@ dag = DAG(
 def create_upload_task(task_id, sftp_folder, local_dir):
     return DockerOperator(
         task_id=task_id,
-        image='upload-to-bigquery:latest',  #previous was upload-to-bigquery:dtype-fix
+        image='gcr.io/icef-437920/upload-to-bigquery:latest',  #previous was upload-to-bigquery:dtype-fix
         api_version='auto',
         auto_remove=True,
         tty=True,
@@ -42,7 +42,7 @@ def create_upload_task(task_id, sftp_folder, local_dir):
             "SFTP_FOLDER_NAME": sftp_folder,
             "LOCAL_DIR": local_dir,
         },
-
+   
         mounts=[
             {
                 "Source": google_applications_credentials_path,  # Host path for credentials
@@ -55,8 +55,7 @@ def create_upload_task(task_id, sftp_folder, local_dir):
                 "Type": "bind",
             },
         ],
-        
-
+        force_pull=True,
         dag=dag,
     )
 
@@ -67,17 +66,12 @@ upload_illuminate = create_upload_task(
     local_dir='/home/g2015samtaylor/illuminate',
 )
 
-upload_powerschool = create_upload_task(
-    task_id='upload_to_bigquery_powerschool',
-    sftp_folder='powerschool',
-    local_dir='/home/icef/powerschool/',
-)
-
-# upload_commonlit = create_upload_task(
-#     task_id='upload_to_bigquery_commonlit',
-#     sftp_folder='common_lit',
-#     local_dir='/home/g2015samtaylor/common_lit',
+# upload_powerschool = create_upload_task(
+#     task_id='upload_to_bigquery_powerschool',
+#     sftp_folder='powerschool',
+#     local_dir='/home/icef/powerschool/',
 # )
+
 
 upload_iready = create_upload_task(
     task_id='upload_to_bigquery_iready',
@@ -109,7 +103,7 @@ upload_state_testing = create_upload_task(
     local_dir='/home/g2015samtaylor/state_testing',
 )
 
-upload_state_testing = create_upload_task(
+upload_ixl = create_upload_task(
     task_id='upload_to_bigquery_ixl',
     sftp_folder='ixl',
     local_dir='/home/g2015samtaylor/ixl',
@@ -117,9 +111,9 @@ upload_state_testing = create_upload_task(
 
 # Run tasks in parallel
 upload_illuminate 
-upload_powerschool
 upload_iready
 upload_python_views
 upload_dibels
 upload_star
 upload_state_testing
+upload_ixl

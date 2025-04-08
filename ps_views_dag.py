@@ -30,6 +30,7 @@ with DAG(
     create_student_to_teacher = DockerOperator(
         task_id='student-to-teacher',  # Unique task ID
         image='gcr.io/icef-437920/student-to-teacher:latest',  # The Docker image to run
+        force_pull=True,  # Force Docker to pull the latest image. so it does not run a cached image
         command='python /app/main.py',  # Command to execute inside the container
         mounts=[
             {
@@ -37,18 +38,14 @@ with DAG(
                 'target': '/app/credentials.json',
                 'type': 'bind',
             },
-            {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/app/views',
-                'type': 'bind',
-            },
-            {
-                'source': '/home/icef/powerschool',
-                'target': '/app/ps',
-                'type': 'bind',
-            }
         ],
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/app/credentials.json'
+        },
         dag=dag  # Associate the task with the DAG
 
     )
+
+
+
 

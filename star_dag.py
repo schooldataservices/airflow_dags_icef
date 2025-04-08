@@ -33,22 +33,19 @@ with DAG(
     # Define a task to run the Docker container (DockerOperator)
     run_star_processing = DockerOperator(
         task_id='run_star_script_processing',  # Unique task ID
-        image='star-processing',  # The image to run
+        image='gcr.io/icef-437920/star-processing:latest',  # The image to run
         command='python /app/main.py',  # Command to execute in the container
         mounts=[
-            # Bind mount for CSV input files
+            # Bind mount for Google credentials
             {
-                'source': '/home/g2015samtaylor/star',
-                'target': '/home/g2015samtaylor/star',
-                'type': 'bind',
-            },
-            # Bind mount for output directory
-            {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/home/g2015samtaylor/views',
+                'source': '/home/g2015samtaylor/icef-437920.json',
+                'target': '/app/icef-437920.json',
                 'type': 'bind',
             },
         ],
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/app/icef-437920.json'  # Set the environment variable
+        },
         dag=dag  # Associate the task with the DAG
     )
 
