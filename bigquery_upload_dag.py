@@ -16,7 +16,7 @@ args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
     'execution_timeout': timedelta(hours=1),
-    'email': ['2015samtaylor@gmail.com']
+    'email': ['2015samtaylor@gmail.com', 'jback@icefps.org']
 }
 
 # Initialize the DAG
@@ -66,11 +66,11 @@ upload_illuminate = create_upload_task(
     local_dir='/home/g2015samtaylor/illuminate',
 )
 
-# upload_powerschool = create_upload_task(
-#     task_id='upload_to_bigquery_powerschool',
-#     sftp_folder='powerschool',
-#     local_dir='/home/icef/powerschool/',
-# )
+upload_powerschool = create_upload_task(
+    task_id='upload_to_bigquery_powerschool',
+    sftp_folder='powerschool',
+    local_dir='/home/g2015samtaylor/powerschool/',
+)
 
 
 upload_iready = create_upload_task(
@@ -117,3 +117,4 @@ upload_dibels
 upload_star
 upload_state_testing
 upload_ixl
+upload_powerschool

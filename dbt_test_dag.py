@@ -25,14 +25,24 @@ with DAG(
 ) as dag:
 
 
-    run_dbt_model = BashOperator(
+    dbt_test_ixl = BashOperator(
         task_id='run_ixl_scores_math_model',
-        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt run --select models/production/ixl/ixl_scores_math.sql',
+        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt test --select models/production/ixl/ixl_scores_math.sql',
         env={
             'DBT_PROFILES_DIR': '/home/g2015samtaylor/.dbt',  # Path to dbt profiles
-            # 'HOME': '/home/g2015samtaylor',  # Explicitly set the HOME variable
+            'HOME': '/home/g2015samtaylor',  # Explicitly set the HOME variable
             'PATH': path_variable
         },
     )
 
-    run_dbt_model
+    dbt_test_state_test_continuous = BashOperator(
+        task_id='run_state_test_continuous',
+        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt test --select models/production/state_testing_continuous/state_testing_continuous.sql',
+        env={
+            'DBT_PROFILES_DIR': '/home/g2015samtaylor/.dbt',  # Path to dbt profiles
+            'HOME': '/home/g2015samtaylor',  # Explicitly set the HOME variable
+            'PATH': path_variable
+        },
+    )
+
+# -- create dbt test for main, and move all created views to dbt setup. 

@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import pandas as pd
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.docker.operators.docker import DockerOperator
@@ -9,7 +10,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from airflow.utils.log.logging_mixin import LoggingMixin
 from datetime import datetime, timedelta
 
-working_dir = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers'
+working_dir = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers_selenium'
 sys.path.append(working_dir)
 # Import your custom modules
 from modules.login import *
@@ -35,15 +36,15 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'state_testing_selenium_dag',
+    'toms_state_testing_selenium_dag',
     default_args=default_args,
-    description='A Dag for State Testing Selenium donwloads',
+    description='A Dag for State Testing Selenium donwloads ELPAC or CERS files',
     schedule_interval='10 4 * * 1-5',  
     catchup=False,
 ) as dag:
     
     # Define parameters for download directory and destination directory
-    download_directory = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers/downloads/'
+    download_directory = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers_selenium/downloads/'
     destination_dir = '/home/g2015samtaylor/state_testing/'
     
     def setup_chrome_driver(download_directory):
@@ -69,26 +70,34 @@ with DAG(
         
         driver = setup_chrome_driver(download_directory)
         clear_directory(download_directory)
+
+        def process():
+            try:
+                login(driver, default_wait=10)
+                automation = SchoolGradeAutomation(driver)
+                school_name_strings = [
+                    'ICEF Vista Middle Academy', 'ICEF Vista Elementary Academy',
+                    'ICEF View Park Preparatory High', 'ICEF View Park Preparatory Middle',
+                    'ICEF View Park Preparatory Elementary', 'ICEF Innovation Los Angeles Charter',
+                    'ICEF Inglewood Elementary Charter Academy'
+                ]
+
+                for school in school_name_strings:
+                    automation.download_school_reports(school, '2024-25')
+
+                target_dir = os.path.join(os.getcwd(), 'stacked_dir')
+                stacked = stack_files(download_directory, target_dir)  #file send occurs within here
+            except Exception as e:
+                logging.error(f"An error occurred: {str(e)}")
+            finally:
+                # Ensure the browser is closed even if an error occurs
+                driver.quit()
+                logging.info("Browser window closed.")
+
+
+            stacked = bring_in_student_number(stacked)
         
-        def process(driver, default_wait=30):
-
-            login(driver, default_wait=10)
-            automation = SchoolGradeAutomation(driver)
-            school_name_strings = ['ICEF Vista Middle Academy', 'ICEF Vista Elementary Academy', 
-                                'ICEF View Park Preparatory High', 'ICEF View Park Preparatory Middle', 
-                                'ICEF View Park Preparatory Elementary', 'ICEF Innovation Los Angeles Charter', 
-                                'ICEF Inglewood Elementary Charter Academy']
-
-            for school in school_name_strings:
-                automation.download_school_reports(school, '2023-24', test_one='Math Summative', test_two='Summative ELPAC')
-
-            driver.quit()
-            target_dir = os.path.join(os.getcwd(), 'stacked_dir')
-            stacked = stack_files(download_directory, target_dir)
-                    
-            logger.info('Selenium Process has concluded')
-
-            destination = os.path.join(destination_dir ,'state_testing_continuous.csv')
+            destination = os.path.join(destination_dir , 'state_testing_continuous.csv')
             try:
                 stacked.to_csv(destination, index=False)
                 print(f'Stacked frame sent to {destination}')
@@ -96,7 +105,7 @@ with DAG(
                 print(f'Unable to send stacked frame to to {destination} due to {e}')
     
         
-        process(driver)
+        process()
     
     run_selenium_downloads = PythonOperator(
         task_id='run_state_testing_script',
