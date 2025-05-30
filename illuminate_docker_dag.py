@@ -12,10 +12,13 @@ timezone = pendulum.timezone('America/Chicago')
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
+    'email_on_failure': True,
+    'email_on_retry': True,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
+    'execution_timeout': timedelta(hours=1),
+    'email': ['2015samtaylor@gmail.com'],
+    'catchup': False,  # Do not backfill the DAG
 }
 
 # Define the DAG
