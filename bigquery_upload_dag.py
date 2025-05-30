@@ -109,6 +109,12 @@ upload_ixl = create_upload_task(
     local_dir='/home/g2015samtaylor/ixl',
 )
 
+upload_enrollment = create_upload_task(
+    task_id='upload_to_bigquery_enrollment',
+    sftp_folder='enrollment',
+    local_dir='/home/g2015samtaylor/enrollment',
+)
+
 # Run tasks in parallel
 upload_illuminate 
 upload_iready
@@ -118,3 +124,4 @@ upload_star
 upload_state_testing
 upload_ixl
 upload_powerschool
+upload_enrollment
