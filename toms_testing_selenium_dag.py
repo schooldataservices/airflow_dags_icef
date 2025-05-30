@@ -96,6 +96,12 @@ with DAG(
 
 
             stacked = bring_in_student_number(stacked)
+            stacked = change_scalescore_achievement(stacked)
+            stacked['dfs_math'] = stacked.apply(lambda row: calculate_dfs(row, 'Math'), axis=1) #Add DFS for Math
+            stacked['dfs_ela'] = stacked.apply(lambda row: calculate_dfs(row, 'ELA'), axis=1) #Add DFS for ELA
+            # Apply the function to adjust DFS columns based on the subject
+            stacked = stacked.apply(adjust_dfs_by_subject, axis=1)
+            stacked['proficiency'] = stacked['ScaleScoreAchievementLevel'].apply(calculate_proficiency)
         
             destination = os.path.join(destination_dir , 'state_testing_continuous.csv')
             try:
