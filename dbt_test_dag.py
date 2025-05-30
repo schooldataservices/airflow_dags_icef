@@ -7,10 +7,13 @@ from airflow.models import Variable
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
+    'email_on_failure': True,
+    'email_on_retry': True,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
+    'execution_timeout': timedelta(hours=1),
+    'email': ['2015samtaylor@gmail.com'],
+    'catchup': False,  # Do not backfill the DAG
 }
 path_variable = Variable.get("PATH")
 
@@ -25,9 +28,9 @@ with DAG(
 ) as dag:
 
 
-    dbt_test_ixl = BashOperator(
-        task_id='run_ixl_scores_math_model',
-        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt test --select models/production/ixl/ixl_scores_math.sql',
+    dbt_test_all_production = BashOperator(
+        task_id='run_all_production_tests',
+        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt test --select models/production',
         env={
             'DBT_PROFILES_DIR': '/home/g2015samtaylor/.dbt',  # Path to dbt profiles
             'HOME': '/home/g2015samtaylor',  # Explicitly set the HOME variable
@@ -35,14 +38,5 @@ with DAG(
         },
     )
 
-    dbt_test_state_test_continuous = BashOperator(
-        task_id='run_state_test_continuous',
-        bash_command='cd /home/g2015samtaylor/git_directory/dbt && dbt test --select models/production/state_testing_continuous/state_testing_continuous.sql',
-        env={
-            'DBT_PROFILES_DIR': '/home/g2015samtaylor/.dbt',  # Path to dbt profiles
-            'HOME': '/home/g2015samtaylor',  # Explicitly set the HOME variable
-            'PATH': path_variable
-        },
-    )
 
 # -- create dbt test for main, and move all created views to dbt setup. 
