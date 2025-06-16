@@ -35,6 +35,7 @@ with DAG(
         task_id='run_star_script_processing',  # Unique task ID
         image='gcr.io/icef-437920/star-processing:latest',  # The image to run
         command='python /app/main.py',  # Command to execute in the container
+        auto_remove=True,
         mounts=[
             # Bind mount for Google credentials
             {
@@ -46,6 +47,7 @@ with DAG(
         environment={
             'GOOGLE_APPLICATION_CREDENTIALS': '/app/icef-437920.json'  # Set the environment variable
         },
+        force_pull=True,
         dag=dag  # Associate the task with the DAG
     )
 
