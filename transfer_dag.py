@@ -25,11 +25,11 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # Task to upload the file to GCS
+    # File that is not needed in a local bucket, and can go straight to GCP buckets
     upload_to_gcs = LocalFilesystemToGCSOperator(
         task_id='upload_sftp_file_to_bucket',
         bucket='enrollmentbucket-icefschools-1',  # Replace with your GCS bucket name
-        dst='completed_registrations_2025.csv',  # Name of the file in GCS
+        dst='completed_registrations.csv',  # Name of the file in GCS
         src='/home/local/schoolmint/upload/reports/Back_Jenny_4042676/completed_registrations_2025.csv',  # Local file path
         gcp_conn_id='google_cloud_default',  # Airflow connection ID for GCP
     )
