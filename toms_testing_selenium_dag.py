@@ -3,7 +3,7 @@ import sys
 import logging
 import pandas as pd
 from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
@@ -73,8 +73,8 @@ with DAG(
 
         def process():
             try:
-                login(driver, default_wait=10)
-                automation = SchoolGradeAutomation(driver)
+                login(driver, default_wait=30) #This scrapes an old email if time is too short
+                automation = SchoolGradeAutomation(driver, default_wait=15)
                 school_name_strings = [
                     'ICEF Vista Middle Academy', 'ICEF Vista Elementary Academy',
                     'ICEF View Park Preparatory High', 'ICEF View Park Preparatory Middle',
@@ -99,10 +99,13 @@ with DAG(
             stacked = change_scalescore_achievement(stacked)
             stacked['dfs_math'] = stacked.apply(lambda row: calculate_dfs(row, 'Math'), axis=1) #Add DFS for Math
             stacked['dfs_ela'] = stacked.apply(lambda row: calculate_dfs(row, 'ELA'), axis=1) #Add DFS for ELA
+            stacked['dfs_cast'] = stacked.apply(lambda row: calculate_dfs(row, 'CAST'), axis=1) #Add DFS for CAST
             # Apply the function to adjust DFS columns based on the subject
             stacked = stacked.apply(adjust_dfs_by_subject, axis=1)
             stacked['proficiency'] = stacked['ScaleScoreAchievementLevel'].apply(calculate_proficiency)
-        
+
+            #Reference master file and then only bring new rows in. Log new rows and write out state_testing_continuous with new stuff
+            stacked = update_and_show_new_rows(stacked, gcs_csv_path='gs://state_testingbucket-icefschools-1/state_testing_continuous.csv')      
             destination = os.path.join(destination_dir , 'state_testing_continuous.csv')
             try:
                 stacked.to_csv(destination, index=False)
