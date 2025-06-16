@@ -20,7 +20,7 @@ default_args = {
 with DAG(
     dag_id='iready_processing_dag',
     default_args=default_args,
-    description='DAG for processing iReady data using a Docker container',
+    description='DAG for processing iReady raw data, & create diagnostic_results_tabular table through iReady, Dibels, & Star data',
     schedule_interval='55 4 * * 1-5',  # CRON for Monday-Friday at 4:55 AM
     catchup=False,
     max_active_runs=1,
@@ -28,67 +28,40 @@ with DAG(
 
     iready_processing_task = DockerOperator(
         task_id='process_iready_data',
-        image='iready-processing',  # The Docker image name
+        image='gcr.io/icef-437920/iready-processing:latest',  # The Docker image name
         api_version='auto',
         auto_remove=True,
         tty=True,
+        force_pull=True,
         mounts=[
             {
-                "Source": "/home/local/iready",  # Host directory for input CSVs
-                "Target": "/home/local/iready",  # Container path for input
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/g2015samtaylor/views",  # Host directory for output CSV
-                "Target": "/home/g2015samtaylor/views",  # Container path for output
-                "Type": "bind",
-            },
-             {
-                "Source": "/home/icef/powerschool",  # Host directory for output CSV
-                "Target": "/home/icef/powerschool",  # Container path for output
-                "Type": "bind",
+                'source': '/home/g2015samtaylor/icef-437920.json',  # Path on the VM
+                'target': '/home/sam/icef-437920.json',  # Path inside the container
+                'type': 'bind',
             },
         ],
-        command=["python", "iready_processing.py"],  # Command to run the script
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/home/sam/icef-437920.json'  # Set the environment variable
+        },
         dag=dag,
     )
 
-       # Task 2: Run pivot-iready container, reference local file benchmark.csv to ultimately send to views as iready_orp.csv
     pivot_iready_task = DockerOperator(
-        task_id='pivot_iready_data',
-        image='pivot-diagnostics',  # The Docker image name for the second container
+        task_id='create_diagnostic_results',
+        image='gcr.io/icef-437920/create_diagnostic_results:latest',  # The Docker image name for the second container
         api_version='auto',
         auto_remove=True,
+        tty=True,
+        force_pull=True,
         mounts=[
             {
-                "Source": "/home/g2015samtaylor/views/iready_assessment_results.csv",  # Host file
-                "Target": "/app/iready_assessment_results.csv",  # Container file
-                "Type": "bind",
+                'source': '/home/g2015samtaylor/icef-437920.json',  # Path on the VM
+                'target': '/home/sam/icef-437920.json',  # Path inside the container
+                'type': 'bind',
             },
-            {
-                "Source": "/home/g2015samtaylor/views",  # Host directory for output
-                "Target": "/app/output_dir",  # Container path for output
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/g2015samtaylor/dibels/benchmark.csv",  # Referencing local file
-                "Target": "/app/benchmark.csv",  # Referencing container file
-                "Type": "bind",
-            },
-            {
-                "Source": "/home/g2015samtaylor/star",  # Referencing local directory for multiple files
-                "Target": "/app/star",  # Referencing container file
-                "Type": "bind",
-            },
-
-
         ],
-        command=[
-            "--input_iready", "/app/iready_assessment_results.csv",
-            "--input_dibels", "/app/benchmark.csv",
-            "--input_star", "/app/star",
-            "--output", "/app/output_dir/diagnostic_results_tabular.csv",
-        ],
+        environment={
+            'GOOGLE_APPLICATION_CREDENTIALS': '/home/sam/icef-437920.json'  # Set the environment variable
+        },
+        dag=dag,
     )
-
-#parallel execution
