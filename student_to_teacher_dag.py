@@ -19,7 +19,7 @@ default_args = {
 
 # Define the DAG
 with DAG(
-    'ps_views_dag',
+    'student_to_teacher_dag',
     default_args=default_args,
     description='A DAG for processing ps views',
     schedule_interval='20 3 * * 1-5',  

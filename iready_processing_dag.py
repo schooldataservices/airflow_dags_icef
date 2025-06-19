@@ -26,7 +26,7 @@ with DAG(
     max_active_runs=1,
 ) as dag:
 
-    iready_processing_task = DockerOperator(
+    iready_processing = DockerOperator(
         task_id='process_iready_data',
         image='gcr.io/icef-437920/iready-processing:latest',  # The Docker image name
         api_version='auto',
@@ -46,7 +46,7 @@ with DAG(
         dag=dag,
     )
 
-    pivot_iready_task = DockerOperator(
+    create_diagnostics_results = DockerOperator(
         task_id='create_diagnostic_results',
         image='gcr.io/icef-437920/create_diagnostic_results:latest',  # The Docker image name for the second container
         api_version='auto',

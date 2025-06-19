@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from airflow.models import Variable
 
 # Get the Google credentials path from Airflow Variables
-google_applications_credentials_path = Variable.get("google_applications_credentials_path")
+google_application_credentials_path = Variable.get("google_applications_credentials_path")
 
 # Define default arguments
 args = {
@@ -16,8 +16,8 @@ args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
     'execution_timeout': timedelta(hours=1),
-    'email': ['2015samtaylor@gmail.com', 'jback@icefps.org']
-}
+    'email': ['2015samtaylor@gmail.com']
+} # 'jback@icefps.org'
 
 # Initialize the DAG
 dag = DAG(
@@ -30,7 +30,23 @@ dag = DAG(
 )
 
 # Helper function to create DockerOperator tasks
-def create_upload_task(task_id, sftp_folder, local_dir):
+def create_upload_task(task_id, dataset_name, local_dir=None):
+    mounts = [
+        {
+            "Source": google_application_credentials_path,  # Host path for credentials
+            "Target": google_application_credentials_path,  # Container path for credentials
+            "Type": "bind",
+        },
+    ]
+
+    # Add the local_dir mount only if local_dir is provided
+    if local_dir:
+        mounts.append({
+            "Source": local_dir,  # Host path for local directory
+            "Target": local_dir,  # Container path for local directory
+            "Type": "bind",
+        })
+
     return DockerOperator(
         task_id=task_id,
         image='gcr.io/icef-437920/upload-to-bigquery:latest',  #previous was upload-to-bigquery:dtype-fix
@@ -38,23 +54,11 @@ def create_upload_task(task_id, sftp_folder, local_dir):
         auto_remove=True,
         tty=True,
         environment={
-            "GOOGLE_APPLICATION_CREDENTIALS": google_applications_credentials_path,
-            "SFTP_FOLDER_NAME": sftp_folder,
-            "LOCAL_DIR": local_dir,
+            "GOOGLE_APPLICATION_CREDENTIALS": google_application_credentials_path,
+            "dataset_name": dataset_name,
+            "LOCAL_DIR": local_dir if local_dir else "",  # Pass an empty string if local_dir is None
         },
-   
-        mounts=[
-            {
-                "Source": google_applications_credentials_path,  # Host path for credentials
-                "Target": google_applications_credentials_path,  # Container path for credentials
-                "Type": "bind",
-            },
-            {
-                "Source": local_dir,  # Host path for local directory
-                "Target": local_dir,  # Container path for local directory
-                "Type": "bind",
-            },
-        ],
+        mounts=mounts,
         force_pull=True,
         dag=dag,
     )
@@ -62,57 +66,54 @@ def create_upload_task(task_id, sftp_folder, local_dir):
 # Define upload tasks
 upload_illuminate = create_upload_task(
     task_id='upload_to_bigquery_illuminate',
-    sftp_folder='illuminate',
-    local_dir='/home/g2015samtaylor/illuminate',
+    dataset_name='illuminate',
+
 )
 
 upload_powerschool = create_upload_task(
     task_id='upload_to_bigquery_powerschool',
-    sftp_folder='powerschool',
-    local_dir='/home/g2015samtaylor/powerschool/',
+    dataset_name='powerschool',
 )
-
 
 upload_iready = create_upload_task(
     task_id='upload_to_bigquery_iready',
-    sftp_folder='iready',
+    dataset_name='iready',
     local_dir='/home/local/iready',
 )
 
+#Dibels is the only one that outputs locally to this folder
 upload_python_views = create_upload_task(
     task_id='upload_to_bigquery_python_views',
-    sftp_folder='views',
+    dataset_name='views',
     local_dir='/home/g2015samtaylor/views',
 )
-
+#Eventually local folder could be removed
 upload_dibels = create_upload_task(
     task_id='upload_to_bigquery_dibels',
-    sftp_folder='dibels',
+    dataset_name='dibels',
     local_dir='/home/g2015samtaylor/dibels',
 )
 
 upload_star = create_upload_task(
     task_id='upload_to_bigquery_star',
-    sftp_folder='star',
-    local_dir='/home/g2015samtaylor/star',
+    dataset_name='star',
 )
 
+#Eventually local folder coud be removed
 upload_state_testing = create_upload_task(
     task_id='upload_to_bigquery_state_testing',
-    sftp_folder='state_testing',
+    dataset_name='state_testing',
     local_dir='/home/g2015samtaylor/state_testing',
 )
 
 upload_ixl = create_upload_task(
     task_id='upload_to_bigquery_ixl',
-    sftp_folder='ixl',
-    local_dir='/home/g2015samtaylor/ixl',
+    dataset_name='ixl',
 )
 
 upload_enrollment = create_upload_task(
     task_id='upload_to_bigquery_enrollment',
-    sftp_folder='enrollment',
-    local_dir='/home/g2015samtaylor/enrollment',
+    dataset_name='enrollment',
 )
 
 # Run tasks in parallel
