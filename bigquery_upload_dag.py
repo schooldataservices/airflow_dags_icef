@@ -81,12 +81,6 @@ upload_iready = create_upload_task(
     local_dir='/home/local/iready',
 )
 
-#Dibels is the only one that outputs locally to this folder
-upload_python_views = create_upload_task(
-    task_id='upload_to_bigquery_python_views',
-    dataset_name='views',
-    local_dir='/home/g2015samtaylor/views',
-)
 #Eventually local folder could be removed
 upload_dibels = create_upload_task(
     task_id='upload_to_bigquery_dibels',
@@ -119,7 +113,6 @@ upload_enrollment = create_upload_task(
 # Run tasks in parallel
 upload_illuminate 
 upload_iready
-upload_python_views
 upload_dibels
 upload_star
 upload_state_testing

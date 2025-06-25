@@ -106,8 +106,8 @@ with DAG(
             },
             # Bind mount for output directory
             {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/home/g2015samtaylor/views',
+                'source': '/home/g2015samtaylor/dibels',
+                'target': '/home/g2015samtaylor/dibels',
                 'type': 'bind',
             },
         ],
@@ -133,8 +133,8 @@ with DAG(
                 'type': 'bind',
             },
             {
-                'source': '/home/g2015samtaylor/views',
-                'target': '/app/views',
+                'source': '/home/g2015samtaylor/dibels',
+                'target': '/app/dibels',
                 'type': 'bind',
             }
         ],
