@@ -105,7 +105,8 @@ with DAG(
             stacked_df = stack_files_in_directory(normalized_dir)
 
             ixl_scores_math = stacked_df.loc[stacked_df['subject'].isin(['Algebra 1', 'Algebra 2', 'Geometry'])].reset_index(drop=True)
-
+            
+            send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=ixl_scores_math, frame_name='ixl_scores_math.csv')
             send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=stacked_df, frame_name='ixl_scores.csv')
 
             return(stacked_df)
