@@ -110,6 +110,11 @@ upload_enrollment = create_upload_task(
     dataset_name='enrollment',
 )
 
+upload_views = create_upload_task(
+    task_id='upload_to_bigquery_views',
+    dataset_name='views',
+)
+
 # Run tasks in parallel
 upload_illuminate 
 upload_iready
@@ -119,3 +124,4 @@ upload_state_testing
 upload_ixl
 upload_powerschool
 upload_enrollment
+upload_views
