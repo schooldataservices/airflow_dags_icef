@@ -36,6 +36,7 @@ with DAG(
         image='gcr.io/icef-437920/star-processing:latest',  # The image to run
         command='python /app/main.py',  # Command to execute in the container
         auto_remove=True,
+        mem_limit='4g',
         mounts=[
             # Bind mount for Google credentials
             {
