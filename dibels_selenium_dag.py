@@ -95,8 +95,7 @@ with DAG(
     # Define a task to run the Docker container (DockerOperator)
     create_dibels_assessment_results = DockerOperator(
         task_id='create_dibels_assessment_results',  # Unique task ID
-        image='dibels-processing',  # The image to run
-        command='python /app/dibels_view.py',  # Command to execute in the container
+        image='gcr.io/icef-437920/dibels-processing',  # The image to run
         mounts=[
             # Bind mount for CSV input files
             {
@@ -104,13 +103,8 @@ with DAG(
                 'target': '/home/g2015samtaylor/dibels',
                 'type': 'bind',
             },
-            # Bind mount for output directory
-            {
-                'source': '/home/g2015samtaylor/dibels',
-                'target': '/home/g2015samtaylor/dibels',
-                'type': 'bind',
-            },
         ],
+        force_pull=True,
         trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails
         dag=dag  # Associate the task with the DAG
     )
@@ -118,8 +112,7 @@ with DAG(
       # Define a task to run the Docker container (DockerOperator)
     create_dibels_pm_view = DockerOperator(
         task_id='create_dibels_pm_view',  # Unique task ID
-        image='dibels-pm-processing',  # The image to run
-        command='python /app/create_dibels_view.py',  # Command to execute in the container
+        image='gcr.io/icef-437920/dibels-pm-processing',  # The image to run
         mounts=[
             # Bind mount for CSV input files, & output
             {
@@ -131,13 +124,9 @@ with DAG(
                 'source': '/home/g2015samtaylor/git_directory/Dibels/dibels_view',
                 'target': '/app/dibels_view',
                 'type': 'bind',
-            },
-            {
-                'source': '/home/g2015samtaylor/dibels',
-                'target': '/app/dibels',
-                'type': 'bind',
             }
         ],
+        force_pull=True,
         trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails
         dag=dag,  # Associate the task with the DAG
     )

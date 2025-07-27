@@ -30,7 +30,7 @@ with DAG(
         task_id='upload_sftp_file_to_bucket',
         bucket='enrollmentbucket-icefschools-1',  # Replace with your GCS bucket name
         dst='completed_registrations.csv',  # Name of the file in GCS
-        src='/home/local/schoolmint/upload/reports/Back_Jenny_4042676/completed_registrations_2025.csv',  # Local file path
+        src='/home/local/schoolmint/upload/reports/Data_ICEF_4410191/completed_registrations_2025.csv',  # Local file path
         gcp_conn_id='google_cloud_default',  # Airflow connection ID for GCP
     )
 

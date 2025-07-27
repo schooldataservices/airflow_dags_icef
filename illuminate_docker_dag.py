@@ -35,7 +35,7 @@ with DAG(
     # Task to run the Dockerized pipeline
     run_docker_pipeline = DockerOperator(
         task_id='run_docker_pipeline',
-        image='gcr.io/icef-437920/illuminate-pipeline:pyspark-v1',  # Pulling from GCR
+        image='gcr.io/icef-437920/illuminate-pipeline:latest',  # Pulling from GCR
         api_version='auto',
         tty=True,
         auto_remove=True,  # Automatically remove the container after completion
@@ -50,8 +50,8 @@ with DAG(
         ],
         environment={
             'PYSPARK_SUBMIT_ARGS': '--conf spark.pyspark.gateway.timeout=300',
-            'YEARS_DATA': '24-25',
-            'START_DATE': '2024-07-01',
+            'YEARS_DATA': '25-26',
+            'START_DATE': '2025-05-01', #this will change once data starts comig for 25-26
             'GOOGLE_APPLICATION_CREDENTIALS': '/app/icef-437920.json'  # Add the environment variable
         },
         force_pull=True  # Ensures the latest image is pulled

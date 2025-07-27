@@ -78,7 +78,7 @@ with DAG(
                     'Math-Teacher-2-VPHS Placeholder': 'Math',
                     'Math-Teacher-3-VPHS Placeholder': 'Math',
                     'Science-Teach-1-VPHS Placeholder': 'Math',
-                    'Amir Alhambra': 'Math',
+                    # 'Amir Alhambra': 'Math',
                     'Dameon Turney': 'Math',
                     "Te'a Jones": 'Math',
                     'Zion McCutcheon': 'ELA', #Subject is not showing up for him.
@@ -92,7 +92,7 @@ with DAG(
                 for teacher, subject in teachers.items():
                     make_selections(driver, subject, teacher, default_wait=30, download_dir=download_directory)
                 
-                check_file_count(download_directory, 12)
+                check_file_count(download_directory, 11)
             finally:
                 driver.quit()
                 logging.info('Selenium Process has concluded')
@@ -104,9 +104,9 @@ with DAG(
             normalized_dir = os.path.join(parent_dir, "normalized_files")
             stacked_df = stack_files_in_directory(normalized_dir)
 
-            ixl_scores_math = stacked_df.loc[stacked_df['subject'].isin(['Algebra 1', 'Algebra 2', 'Geometry'])].reset_index(drop=True)
+            # ixl_scores_math = stacked_df.loc[stacked_df['subject'].isin(['Algebra 1', 'Algebra 2', 'Geometry'])].reset_index(drop=True)
             
-            send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=ixl_scores_math, frame_name='ixl_scores_math.csv')
+            # send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=ixl_scores_math, frame_name='ixl_scores_math.csv')
             send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=stacked_df, frame_name='ixl_scores.csv')
 
             return(stacked_df)
