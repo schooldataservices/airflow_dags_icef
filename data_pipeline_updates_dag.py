@@ -35,6 +35,27 @@ def fetch_data_from_mysql():
     logging.info(f"Fetched {len(df)} rows from MySQL.")
     logging.info(df.iloc[0])
 
+    documentation_links = {
+    'ixl_selenium_dag': 'https://github.com/schooldataservices/ixl_selenium_icef',
+    'illuminate_docker_dag': 'https://github.com/schooldataservices/illuminate_pyspark_icef',
+    'bigquery_upload_dag': 'https://github.com/schooldataservices/gcp_icef',
+    'iready_processing_dag': 'https://github.com/schooldataservices/iready_processing_icef',
+    'SFTP_to_gcs_transfer': 'https://github.com/schooldataservices/gcp_icef',
+    'sftp_operations_docker_dag': 'https://github.com/schooldataservices/gcp_icef',
+    'dibels_processing': 'https://github.com/schooldataservices/dibels_selenium_icef',
+    'star_processing_dag': 'https://github.com/schooldataservices/star_processing_icef',
+    'student_to_teacher_dag': 'https://github.com/schooldataservices/ps_views_icef',
+    'enrollment': 'https://github.com/schooldataservices/enrollment_icef',
+    'google_sheets_hookups': 'https://github.com/schooldataservices/google_sheets_hookups_icef'
+    }
+
+    # Add the 'documentation link' column based on the 'dag_id' column
+    df['documentation link'] = df['dag_id'].map(documentation_links)
+
+    # If a 'dag_id' is not in the dictionary, the value will be NaN. You can replace it with a default value if needed:
+    df['documentation link'] = df['documentation link'].fillna('')
+
+
     # Ensure that the connection is closed to avoid reuse in the next task
     connection.close()  # Close the connection explicitly
 
@@ -74,7 +95,7 @@ dag = DAG(
     'data_pipeline_metadata',
     default_args=args,
     description='Send over Data Pipeline Metadata',
-    schedule_interval='20 5 * * 1-5',
+    schedule_interval='0 */3 * * *', #run every 3 hours
     start_date=datetime(2024, 10, 28),  # Match the start_date here
     catchup=False,  # No backfilling
 )

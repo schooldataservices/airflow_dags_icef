@@ -40,7 +40,7 @@ with DAG(
         tty=True,
         auto_remove=True,  # Automatically remove the container after completion
         network_mode="host",  # Use host networking if required
-        command='spark-submit /app/illuminate_pipeline.py',
+        command='python /app/illuminate_pipeline.py',
         mounts=[
             {
                 "Source": "/home/g2015samtaylor/icef-437920.json",  # Host path for credentials
@@ -49,8 +49,7 @@ with DAG(
             },
         ],
         environment={
-            'PYSPARK_SUBMIT_ARGS': '--conf spark.pyspark.gateway.timeout=300',
-            'YEARS_DATA': '25-26',
+            'YEARS_DATA': '24-25',
             'START_DATE': '2025-05-01', #this will change once data starts comig for 25-26
             'GOOGLE_APPLICATION_CREDENTIALS': '/app/icef-437920.json'  # Add the environment variable
         },

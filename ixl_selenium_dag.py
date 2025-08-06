@@ -8,6 +8,7 @@ from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.utils.log.logging_mixin import LoggingMixin
 from datetime import datetime, timedelta
+from gcp_utils_sds import buckets, yoy
 
 working_dir = '/home/g2015samtaylor/git_directory/IXL'
 sys.path.append(working_dir)
@@ -69,7 +70,7 @@ with DAG(
         driver = setup_chrome_driver(download_directory)
         clear_directory(download_directory)
         
-        def process(default_wait=30):
+        def process(years_data, default_wait=30):
 
             try:
                 login(driver, default_wait)
@@ -103,15 +104,27 @@ with DAG(
             parent_dir = os.path.dirname(download_directory)
             normalized_dir = os.path.join(parent_dir, "normalized_files")
             stacked_df = stack_files_in_directory(normalized_dir)
+            stacked_df['year'] = years_data
 
-            # ixl_scores_math = stacked_df.loc[stacked_df['subject'].isin(['Algebra 1', 'Algebra 2', 'Geometry'])].reset_index(drop=True)
-            
-            # send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=ixl_scores_math, frame_name='ixl_scores_math.csv')
-            send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=stacked_df, frame_name='ixl_scores.csv')
+                   # Historical Appending
+            appender = yoy.YearlyDataAppender(
+                project_id="icef-437920",
+                dataset_id="ixl",
+                bucket_name="historicalbucket-icefschools-1"
+            )
+
+            stacked_df = appender.load_and_append(
+                table_name="ixl_scores",
+                blob_paths_old=["ixl/ixl_scores_24-25.csv"],
+                current_df=stacked_df,
+                drop_duplicate_columns=[col for col in stacked_df.columns if col != 'new_or_current']
+            )
+
+            buckets.send_to_gcs('ixlbucket-icefschools-1', save_path='', frame=stacked_df, frame_name='ixl_scores.csv')
 
             return(stacked_df)
         
-        df = process()
+        df = process(years_data='24-25')
         return df
     
     run_selenium_downloads = PythonOperator(

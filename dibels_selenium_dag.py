@@ -82,15 +82,15 @@ with DAG(
     destination_dir = '/home/g2015samtaylor/dibels'
     
     # Define a task to run the Dibels script (PythonOperator)
-    run_selenium_downloads = PythonOperator(
-        task_id='run_dibels_script_downloads',  # Unique task ID
-        python_callable=run_dibels_script,
-        op_kwargs={
-            'download_directory': download_directory,
-            'destination_dir': destination_dir
-        },
-        dag=dag,
-    )
+    # run_selenium_downloads = PythonOperator(
+    #     task_id='run_dibels_script_downloads',  # Unique task ID
+    #     python_callable=run_dibels_script,
+    #     op_kwargs={
+    #         'download_directory': download_directory,
+    #         'destination_dir': destination_dir
+    #     },
+    #     dag=dag,
+    # )
 
     # Define a task to run the Docker container (DockerOperator)
     create_dibels_assessment_results = DockerOperator(
@@ -103,10 +103,15 @@ with DAG(
                 'target': '/home/g2015samtaylor/dibels',
                 'type': 'bind',
             },
+            # Bind mount for Google Cloud credentials file
+            {
+                'source': '/home/g2015samtaylor/icef-437920.json',  # Path on the host
+                'target': '/home/g2015samtaylor/icef-437920.json',  # Path inside the container
+                'type': 'bind',
+            },
         ],
         force_pull=True,
-        trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails
-        dag=dag  # Associate the task with the DAG
+        dag=dag,  # Associate the task with the DAG
     )
 
       # Define a task to run the Docker container (DockerOperator)
@@ -124,12 +129,22 @@ with DAG(
                 'source': '/home/g2015samtaylor/git_directory/Dibels/dibels_view',
                 'target': '/app/dibels_view',
                 'type': 'bind',
-            }
+            },
+            # Bind mount for Google Cloud credentials file
+            {
+                'source': '/home/g2015samtaylor/icef-437920.json',  # Path on the host
+                'target': '/home/sam/icef-437920.json',  # Path inside the container
+                'type': 'bind',
+            },
         ],
+        environment={
+            'YEARS_DATA': '24-25',  # Corrected syntax for environment variable
+        },
         force_pull=True,
         trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails
         dag=dag,  # Associate the task with the DAG
     )
 
     # Set up the task dependencies (run Selenium first, then run Docker)
-    run_selenium_downloads >> create_dibels_assessment_results >> create_dibels_pm_view
+    # run_selenium_downloads >> create_dibels_assessment_results >> create_dibels_pm_view
+    create_dibels_assessment_results >> create_dibels_pm_view

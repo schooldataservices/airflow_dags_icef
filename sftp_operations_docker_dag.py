@@ -14,7 +14,7 @@ default_args = {
 with DAG(
     dag_id='sftp_operations_docker_dag',
     default_args=default_args,
-    description='Run SFTP operations inside a Docker container',
+    description='Pull iready files from their SFTP',
     start_date=datetime(2024, 12, 15),
     schedule_interval='45 4 * * 1-5',  # CRON for Monday-Friday at 4:45 AM
 ) as dag:

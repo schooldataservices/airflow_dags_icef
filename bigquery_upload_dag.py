@@ -115,6 +115,11 @@ upload_views = create_upload_task(
     dataset_name='views',
 )
 
+upload_dbt_historical = create_upload_task(
+    task_id='upload_to_bigquery_dbt_historical',
+    dataset_name='dbt_historical',
+)
+
 # Run tasks in parallel
 upload_illuminate 
 upload_iready
@@ -125,3 +130,4 @@ upload_ixl
 upload_powerschool
 upload_enrollment
 upload_views
+upload_dbt_historical
