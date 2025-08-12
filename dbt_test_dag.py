@@ -21,7 +21,7 @@ path_variable = Variable.get("PATH")
 with DAG(
     'dbt-test',
     default_args=default_args,
-    description='Run the ixl_scores_math dbt model',
+    description='Run all production tests for table validity',
     schedule_interval='@daily',  # Adjust the schedule as needed
     start_date=datetime(2023, 1, 1),
     catchup=False,
