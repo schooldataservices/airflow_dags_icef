@@ -138,7 +138,7 @@ with DAG(
             },
         ],
         environment={
-            'YEARS_DATA': '24-25',  # Corrected syntax for environment variable
+            'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
         },
         force_pull=True,
         trigger_rule=TriggerRule.ALL_DONE,  # Ensure that this task runs even if the previous task fails

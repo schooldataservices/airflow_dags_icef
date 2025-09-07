@@ -51,7 +51,7 @@ with DAG(
             },
         ],
         environment={
-            'YEARS_DATA': '24-25',  # Corrected syntax for environment variable
+            'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
         },
         dag=dag,
     )
@@ -72,7 +72,7 @@ with DAG(
         ],
         environment={
             'GOOGLE_APPLICATION_CREDENTIALS': '/home/sam/icef-437920.json',  # Set the environment variable
-            'YEARS_DATA': '24-25',  # Corrected syntax for environment variable
+            'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
         },
         dag=dag,
     )

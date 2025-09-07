@@ -77,8 +77,7 @@ upload_powerschool = create_upload_task(
 
 upload_iready = create_upload_task(
     task_id='upload_to_bigquery_iready',
-    dataset_name='iready',
-    local_dir='/home/local/iready',
+    dataset_name='iready'
 )
 
 #Eventually local folder could be removed
