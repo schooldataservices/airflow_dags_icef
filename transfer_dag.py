@@ -21,7 +21,7 @@ with DAG(
     'SFTP_to_gcs_transfer',
     default_args=default_args,
     description='Upload the applications and registrations file coming from SchoolMint to a GCS bucket. File is received in Local SFTP at 5 AM Central time. ',
-    schedule_interval='10 5 * * 1-5',  
+    schedule_interval='50 4 * * 1-5',  
     catchup=False,
 ) as dag:
 
@@ -34,4 +34,24 @@ with DAG(
         gcp_conn_id='google_cloud_default',  # Airflow connection ID for GCP
     )
 
-    upload_to_gcs
+    iready_ftp_staging = LocalFilesystemToGCSOperator(
+    task_id='upload_iready_sftp_files_to_bucket',
+    bucket='iready_stagingbucket-icefschools-1',
+    dst='',  # Name of the second file in GCS
+    src='/home/local/iready/iready*',  # Local path to the second file
+    gcp_conn_id='google_cloud_default',
+    )
+
+    iready_diagnostic_results = LocalFilesystemToGCSOperator(
+    task_id='upload_iready_diagnostic_raw_files',
+    bucket='ireadybucket-icefschools-1',
+    dst='',  # Name of the second file in GCS
+    src='/home/local/iready/diagnostic*',  # Local path to the second file
+    gcp_conn_id='google_cloud_default',
+    )
+
+upload_to_gcs  
+iready_ftp_staging  
+iready_diagnostic_results  # Optional: set task order if needed
+    
+

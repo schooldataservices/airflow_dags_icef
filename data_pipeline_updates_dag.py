@@ -46,7 +46,8 @@ def fetch_data_from_mysql():
     'star_processing_dag': 'https://github.com/schooldataservices/star_processing_icef',
     'student_to_teacher_dag': 'https://github.com/schooldataservices/ps_views_icef',
     'enrollment': 'https://github.com/schooldataservices/enrollment_icef',
-    'google_sheets_hookups': 'https://github.com/schooldataservices/google_sheets_hookups_icef'
+    'google_sheets_hookups': 'https://github.com/schooldataservices/google_sheets_hookups_icef',
+    'pear_processing_dag' : 'https://github.com/schooldataservices/pear'
     }
 
     # Add the 'documentation link' column based on the 'dag_id' column

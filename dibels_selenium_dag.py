@@ -47,6 +47,7 @@ def run_dibels_script(download_directory, destination_dir):
     
     # Log the start of the script
     logging.info('\n\n-------------New Logging Instance')
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/g2015samtaylor/icef-437920.json'
 
     # Run your main script
     main(driver, default_wait=30, download_folder=download_directory, destination_dir=destination_dir)
@@ -82,15 +83,15 @@ with DAG(
     destination_dir = '/home/g2015samtaylor/dibels'
     
     # Define a task to run the Dibels script (PythonOperator)
-    # run_selenium_downloads = PythonOperator(
-    #     task_id='run_dibels_script_downloads',  # Unique task ID
-    #     python_callable=run_dibels_script,
-    #     op_kwargs={
-    #         'download_directory': download_directory,
-    #         'destination_dir': destination_dir
-    #     },
-    #     dag=dag,
-    # )
+    run_selenium_downloads = PythonOperator(
+        task_id='run_dibels_script_downloads',  # Unique task ID
+        python_callable=run_dibels_script,
+        op_kwargs={
+            'download_directory': download_directory,
+            'destination_dir': destination_dir
+        },
+        dag=dag,
+    )
 
     # Define a task to run the Docker container (DockerOperator)
     create_dibels_assessment_results = DockerOperator(
@@ -110,6 +111,9 @@ with DAG(
                 'type': 'bind',
             },
         ],
+        environment={
+            'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
+        },
         force_pull=True,
         dag=dag,  # Associate the task with the DAG
     )
@@ -119,21 +123,9 @@ with DAG(
         task_id='create_dibels_pm_view',  # Unique task ID
         image='gcr.io/icef-437920/dibels-pm-processing',  # The image to run
         mounts=[
-            # Bind mount for CSV input files, & output
-            {
-                'source': '/home/g2015samtaylor/dibels',  # Path on the host
-                'target': '/app/dibels',  # Path inside the container
-                'type': 'bind',  # Type of volume (bind mount)
-            },
-            {
-                'source': '/home/g2015samtaylor/git_directory/Dibels/dibels_view',
-                'target': '/app/dibels_view',
-                'type': 'bind',
-            },
-            # Bind mount for Google Cloud credentials file
-            {
+               {
                 'source': '/home/g2015samtaylor/icef-437920.json',  # Path on the host
-                'target': '/home/sam/icef-437920.json',  # Path inside the container
+                'target': '/home/g2015samtaylor/icef-437920.json',  # Path inside the container
                 'type': 'bind',
             },
         ],
@@ -146,5 +138,8 @@ with DAG(
     )
 
     # Set up the task dependencies (run Selenium first, then run Docker)
-    # run_selenium_downloads >> create_dibels_assessment_results >> create_dibels_pm_view
-    create_dibels_assessment_results >> create_dibels_pm_view
+    run_selenium_downloads >> create_dibels_assessment_results >> create_dibels_pm_view
+    
+    #Waiting on this file to become available. Try and bunch this into one docker container with create_dibels_assessmeetn_results
+    # >> create_dibels_pm_view
+  

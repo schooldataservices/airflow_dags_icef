@@ -39,16 +39,6 @@ with DAG(
                 'target': '/home/sam/icef-437920.json',  # Path inside the container
                 'type': 'bind',
             },
-            {
-                'source': '/home/local/iready/iready_instruction_by_lesson_math.csv',  # Path on the VM
-                'target': '/home/local/iready/iready_instruction_by_lesson_math.csv',  # Same path inside the container
-                'type': 'bind',
-            },
-            {
-                'source': '/home/local/iready/iready_instruction_by_lesson_ela.csv',  # Path on the VM
-                'target': '/home/local/iready/iready_instruction_by_lesson_ela.csv',  # Same path inside the container
-                'type': 'bind',
-            },
         ],
         environment={
             'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
@@ -71,7 +61,6 @@ with DAG(
             },
         ],
         environment={
-            'GOOGLE_APPLICATION_CREDENTIALS': '/home/sam/icef-437920.json',  # Set the environment variable
             'YEARS_DATA': '25-26',  # Corrected syntax for environment variable
         },
         dag=dag,

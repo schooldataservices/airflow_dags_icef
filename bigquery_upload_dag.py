@@ -80,17 +80,11 @@ upload_iready = create_upload_task(
     dataset_name='iready'
 )
 
-#Eventually local folder could be removed
 upload_dibels = create_upload_task(
     task_id='upload_to_bigquery_dibels',
     dataset_name='dibels',
-    local_dir='/home/g2015samtaylor/dibels',
 )
 
-upload_star = create_upload_task(
-    task_id='upload_to_bigquery_star',
-    dataset_name='star',
-)
 
 #Eventually local folder coud be removed
 upload_state_testing = create_upload_task(
@@ -119,14 +113,19 @@ upload_dbt_historical = create_upload_task(
     dataset_name='dbt_historical',
 )
 
+upload_pear = create_upload_task(
+    task_id='upload_to_bigquery_pear',
+    dataset_name='pear',
+)
+
 # Run tasks in parallel
 upload_illuminate 
 upload_iready
 upload_dibels
-upload_star
 upload_state_testing
 upload_ixl
 upload_powerschool
 upload_enrollment
 upload_views
 upload_dbt_historical
+upload_pear
