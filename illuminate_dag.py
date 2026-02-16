@@ -16,14 +16,14 @@ default_args = {
     'email_on_retry': True,
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(hours=1),
+    'execution_timeout': timedelta(hours=2),
     'email': ['2015samtaylor@gmail.com'],
     'catchup': False,  # Do not backfill the DAG
 }
 
 # Define the DAG
 with DAG(
-    dag_id='illuminate_docker_dag',
+    dag_id='illuminate_dag',
     default_args=default_args,
     description='A Docker-based DAG to handle Illuminate API calls',
     schedule_interval='0 5 * * *',  # Every day at 5:00 AM

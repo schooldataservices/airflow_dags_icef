@@ -35,18 +35,18 @@ with DAG(
     )
 
     iready_ftp_staging = LocalFilesystemToGCSOperator(
-    task_id='upload_iready_sftp_files_to_bucket',
+    task_id='upload_iready_sftp_files_to_staging_bucket',
     bucket='iready_stagingbucket-icefschools-1',
     dst='',  # Name of the second file in GCS
-    src='/home/local/iready/iready*',  # Local path to the second file
+    src='/home/local/iready/*',  # Local path to the second file
     gcp_conn_id='google_cloud_default',
     )
 
     iready_diagnostic_results = LocalFilesystemToGCSOperator(
-    task_id='upload_iready_diagnostic_raw_files',
+    task_id='upload_iready_sftp_files_to_ireadybucket',
     bucket='ireadybucket-icefschools-1',
     dst='',  # Name of the second file in GCS
-    src='/home/local/iready/diagnostic*',  # Local path to the second file
+    src='/home/local/iready/*',  # Local path to the second file
     gcp_conn_id='google_cloud_default',
     )
 
