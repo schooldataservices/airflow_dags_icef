@@ -37,7 +37,7 @@ def fetch_data_from_mysql():
 
     documentation_links = {
     'ixl_selenium_dag': 'https://github.com/schooldataservices/ixl_selenium_icef',
-    'illuminate_docker_dag': 'https://github.com/schooldataservices/illuminate_pyspark_icef',
+    'illuminate_dag': 'https://github.com/schooldataservices/illuminate_pyspark_icef',
     'bigquery_upload_dag': 'https://github.com/schooldataservices/gcp_icef',
     'iready_processing_dag': 'https://github.com/schooldataservices/iready_processing_icef',
     'SFTP_to_gcs_transfer': 'https://github.com/schooldataservices/gcp_icef',
@@ -95,7 +95,7 @@ def write_to_bigquery(project_id, dataset_id, table_id):
 dag = DAG(
     'data_pipeline_metadata',
     default_args=args,
-    description='Send over Data Pipeline Metadata',
+    description='Send over Data Pipeline Metadata on latest runs, success & failures',
     schedule_interval='0 */3 * * *', #run every 3 hours
     start_date=datetime(2024, 10, 28),  # Match the start_date here
     catchup=False,  # No backfilling

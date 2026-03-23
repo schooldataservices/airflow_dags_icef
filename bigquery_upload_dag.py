@@ -23,7 +23,7 @@ args = {
 dag = DAG(
     'bigquery_upload_dag',
     default_args=args,
-    description='A DAG to upload files from SFTP to BigQuery',
+    description='A DAG to upload flat files to GCS and BigQuery',
     schedule_interval='30 5 * * *',  # Every day at 5:30 AM
     catchup=False,
     max_active_runs=1,
@@ -86,11 +86,9 @@ upload_dibels = create_upload_task(
 )
 
 
-#Eventually local folder coud be removed
 upload_state_testing = create_upload_task(
     task_id='upload_to_bigquery_state_testing',
     dataset_name='state_testing',
-    local_dir='/home/g2015samtaylor/state_testing',
 )
 
 upload_ixl = create_upload_task(

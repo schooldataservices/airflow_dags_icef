@@ -26,11 +26,11 @@ with DAG(
 ) as dag:
 
     # File that is not needed in a local bucket, and can go straight to GCP buckets
-    upload_to_gcs = LocalFilesystemToGCSOperator(
-        task_id='upload_sftp_file_to_bucket',
-        bucket='enrollmentbucket-icefschools-1',  # Replace with your GCS bucket name
-        dst='completed_registrations.csv',  # Name of the file in GCS
-        src='/home/local/schoolmint/upload/reports/Data_ICEF_4410191/completed_registrations_2025.csv',  # Local file path
+    upload_to_gcs_from_school_mint_enroll = LocalFilesystemToGCSOperator(
+        task_id='upload_to_gcs_from_school_mint_enroll',
+        bucket='dbt_historicalbucket-icefschools-1',  # Replace with your GCS bucket name
+        dst='',  # Keep original filenames in the bucket root
+        src='/home/local/schoolmint/upload/reports/Back_Jenny_4042676/*',  # Upload all files from SchoolMint folder
         gcp_conn_id='google_cloud_default',  # Airflow connection ID for GCP
     )
 
@@ -50,7 +50,7 @@ with DAG(
     gcp_conn_id='google_cloud_default',
     )
 
-upload_to_gcs  
+upload_to_gcs_from_school_mint_enroll
 iready_ftp_staging  
 iready_diagnostic_results  # Optional: set task order if needed
     
