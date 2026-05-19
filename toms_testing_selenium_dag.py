@@ -3,7 +3,8 @@ import sys
 import logging
 import pandas as pd
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.exceptions import AirflowException
+from airflow.operators.python import PythonOperator, get_current_context
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
@@ -25,12 +26,12 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2025, 1, 21),  # Update with your desired start date
-    'retries': 1,
+    'retries': 0,
     'email_on_failure': True,
     'email_on_retry': True,
     'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(hours=1),
-    'email': ['2015samtaylor@gmail.com'],
+    'execution_timeout': timedelta(minutes=50),
+    # 'email': ['2015samtaylor@gmail.com', 'jback@icefps.org'],
     'catchup': False,  # Do not backfill the DAG
 }
 
@@ -39,8 +40,10 @@ with DAG(
     'toms_state_testing_selenium_dag',
     default_args=default_args,
     description='A Dag for State Testing Selenium donwloads ELPAC or CERS files',
-    schedule_interval='10 4 * * 1-5',  
+    # Every hour on the hour, every day (scheduler default timezone, e.g. America/Chicago in airflow.cfg)
+    schedule_interval='0 * * * *',
     catchup=False,
+    max_active_runs=1,
 ) as dag:
     
     # Define parameters for download directory and BigQuery
@@ -88,7 +91,14 @@ with DAG(
                 automation.download_school_reports(school, '2025-26')
 
             target_dir = os.path.join(working_dir, 'stacked_dir')
-            stacked = stack_files(download_directory, target_dir)
+            stacked = stack_files(
+                download_directory,
+                target_dir,
+                project_id=bq_project_id,
+                dataset_id=bq_dataset_id,
+                table_id=bq_table_id,
+                dag_name=get_current_context()["dag"].dag_id,
+            )
         except Exception as e:
             logging.error(f"An error occurred: {str(e)}")
         finally:
@@ -96,8 +106,12 @@ with DAG(
             logging.info("Browser window closed.")
 
         if stacked is None:
-            logging.warning("No stacked data; skipping transform and BQ write.")
-            return
+            raise AirflowException(
+                "Selenium did not produce stacked downloads (stacked is None). "
+                "Typical cause: SSO left the session on UPDATE_PASSWORD or another required-action page "
+                "instead of CERS — complete the password update for the automation account in the portal, "
+                "then re-run. This task is failed so Airflow does not report success when nothing was loaded."
+            )
 
         # Transform: student number, scalescore, DFS, proficiency
         stacked = bring_in_student_number(stacked)
@@ -108,15 +122,24 @@ with DAG(
         stacked = stacked.apply(adjust_dfs_by_subject, axis=1)
         stacked['proficiency'] = stacked['ScaleScoreAchievementLevel'].apply(calculate_proficiency)
 
-        # Append only new rows to BigQuery; daily stacked is already saved in stacked_dir by stack_files
-        n = append_new_rows_to_bq(
+        # Full refresh: CERS gives us a cumulative year-to-date snapshot each run,
+        # so we replace the BQ table contents. The function refuses to truncate if
+        # the new dataframe is smaller than 97% of the current BQ row count, which
+        # is the real safety net against a partial Selenium scrape.
+        current_rows = replace_table_from_dataframe(
             stacked,
             project_id=bq_project_id,
             dataset_id=bq_dataset_id,
             table_id=bq_table_id,
             new_rows_dir=new_rows_dir,
+            dag_name=get_current_context()["dag"].dag_id,
+            bucket_name="",
+            file_name="state_testing_continuous_selenium_stacked.csv",
         )
-        logger.info(f"Appended {n} new rows to BigQuery {bq_project_id}.{bq_dataset_id}.{bq_table_id}")
+        logger.info(
+            f"Replaced BigQuery {bq_project_id}.{bq_dataset_id}.{bq_table_id} "
+            f"with {current_rows} rows."
+        )
     
     run_selenium_downloads = PythonOperator(
         task_id='run_state_testing_script',
