@@ -31,7 +31,7 @@ default_args = {
     'email_on_retry': True,
     'retry_delay': timedelta(minutes=5),
     'execution_timeout': timedelta(minutes=50),
-    # 'email': ['2015samtaylor@gmail.com', 'jback@icefps.org'],
+    'email': ['2015samtaylor@gmail.com', 'jback@icefps.org', 'spealer@icefps.org'],
     'catchup': False,  # Do not backfill the DAG
 }
 
@@ -52,6 +52,9 @@ with DAG(
     bq_dataset_id = 'state_testing'
     bq_table_id = 'state_testing_continuous_25-26'
     new_rows_dir = '/home/g2015samtaylor/git_directory/state_testing/elpac_or_cers_selenium/new_rows_daily'
+    # Default to append mode due to occasional lower-row snapshots from Selenium/CERS.
+    # Set to 'full_refresh' to pivot back to WRITE_TRUNCATE behavior.
+    load_mode = 'append'
     
     def setup_chrome_driver(download_directory):
         chrome_options = webdriver.ChromeOptions()
@@ -122,24 +125,52 @@ with DAG(
         stacked = stacked.apply(adjust_dfs_by_subject, axis=1)
         stacked['proficiency'] = stacked['ScaleScoreAchievementLevel'].apply(calculate_proficiency)
 
-        # Full refresh: CERS gives us a cumulative year-to-date snapshot each run,
-        # so we replace the BQ table contents. The function refuses to truncate if
-        # the new dataframe is smaller than 97% of the current BQ row count, which
-        # is the real safety net against a partial Selenium scrape.
-        current_rows = replace_table_from_dataframe(
-            stacked,
-            project_id=bq_project_id,
-            dataset_id=bq_dataset_id,
-            table_id=bq_table_id,
-            new_rows_dir=new_rows_dir,
-            dag_name=get_current_context()["dag"].dag_id,
-            bucket_name="",
-            file_name="state_testing_continuous_selenium_stacked.csv",
-        )
-        logger.info(
-            f"Replaced BigQuery {bq_project_id}.{bq_dataset_id}.{bq_table_id} "
-            f"with {current_rows} rows."
-        )
+        if load_mode == 'append':
+            stats = append_new_rows_from_dataframe(
+                stacked,
+                project_id=bq_project_id,
+                dataset_id=bq_dataset_id,
+                table_id=bq_table_id,
+                new_rows_dir=new_rows_dir,
+                dag_name=get_current_context()["dag"].dag_id,
+                bucket_name="",
+                file_name="state_testing_continuous_selenium_stacked.csv",
+            )
+            logger.info(
+                "Append mode complete for %s.%s.%s: inserted_rows=%s current_rows=%s "
+                "batch_rows=%s batch_exact_duplicates_dropped=%s",
+                bq_project_id,
+                bq_dataset_id,
+                bq_table_id,
+                stats["inserted_rows"],
+                stats["current_rows"],
+                stats["batch_rows"],
+                stats["batch_exact_duplicates_dropped"],
+            )
+        elif load_mode == 'full_refresh':
+            # Full refresh path intentionally kept for rollback/pivot.
+            try:
+                current_rows = replace_table_from_dataframe(
+                    stacked,
+                    project_id=bq_project_id,
+                    dataset_id=bq_dataset_id,
+                    table_id=bq_table_id,
+                    min_row_ratio=MIN_ROW_RATIO,
+                    new_rows_dir=new_rows_dir,
+                    dag_name=get_current_context()["dag"].dag_id,
+                    bucket_name="",
+                    file_name="state_testing_continuous_selenium_stacked.csv",
+                )
+            except RowCountGuardrailError as e:
+                raise AirflowException(str(e)) from e
+            logger.info(
+                f"Full-refresh mode replaced BigQuery {bq_project_id}.{bq_dataset_id}.{bq_table_id} "
+                f"with {current_rows} rows."
+            )
+        else:
+            raise AirflowException(
+                f"Invalid load_mode '{load_mode}'. Expected 'append' or 'full_refresh'."
+            )
     
     run_selenium_downloads = PythonOperator(
         task_id='run_state_testing_script',

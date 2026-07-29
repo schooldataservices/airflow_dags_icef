@@ -22,7 +22,8 @@ with DAG(
     'dbt-test',
     default_args=default_args,
     description='Run all production tests for table validity',
-    schedule_interval='@daily',  # Adjust the schedule as needed
+    # Four times per day on the hour (scheduler timezone, e.g. America/Chicago)
+    schedule_interval='0 */6 * * *',
     start_date=datetime(2023, 1, 1),
     catchup=False,
 ) as dag:

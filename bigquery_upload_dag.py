@@ -116,7 +116,13 @@ upload_pear = create_upload_task(
     dataset_name='pear',
 )
 
+upload_linq = create_upload_task(
+    task_id='upload_to_bigquery_linq',
+    dataset_name='linq',
+)
+
 # Run tasks in parallel
+upload_linq
 upload_illuminate 
 upload_iready
 upload_dibels
