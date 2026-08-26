@@ -20,8 +20,9 @@ default_args = {
 with DAG(
     'SFTP_to_gcs_transfer',
     default_args=default_args,
-    description='Upload the applications and registrations file coming from SchoolMint to a GCS bucket. File is received in Local SFTP at 5 AM Central time. ',
-    schedule_interval='50 4 * * 1-5',  
+    description='Upload SchoolMint applications/registrations from local SFTP to GCS. SchoolMint drops files ~5:00 AM Central; this DAG runs at 5:15 AM so the fresh drop is included.',
+    schedule_interval='15 5 * * 1-5',  # 5:15 AM Central, after SchoolMint ~5:00 AM drop
+
     catchup=False,
 ) as dag:
 

@@ -20,8 +20,8 @@ default_args = {
 with DAG(
     'enrollment',
     default_args=default_args,
-    description='Create incoming students and budgeted enrollment',
-    schedule_interval='0 1 * * 1-5',  # Adjust the schedule as needed
+    description='Create incoming students and budgeted enrollment from latest SchoolMint files in GCS',
+    schedule_interval='0 * * * *',  # hourly
     start_date=datetime(2023, 1, 1),
     catchup=False,
 ) as dag:

@@ -24,7 +24,7 @@ dag = DAG(
     'bigquery_upload_dag',
     default_args=args,
     description='A DAG to upload flat files to GCS and BigQuery',
-    schedule_interval='30 5 * * *',  # Every day at 5:30 AM
+    schedule_interval='40 5 * * *',  # 5:40 AM Central, after enrollment at 5:25 processes fresh SchoolMint files
     catchup=False,
     max_active_runs=1,
 )

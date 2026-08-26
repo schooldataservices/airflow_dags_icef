@@ -22,7 +22,8 @@ with DAG(
     'student_to_teacher_dag',
     default_args=default_args,
     description='A DAG for processing ps views',
-    schedule_interval='20 3 * * 1-5',  
+    schedule_interval='0 * * * *',  # hourly
+
     catchup=False,  # Do not backfill
 ) as dag:
     
